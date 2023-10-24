@@ -4,7 +4,8 @@ let books = {
       "title": "Things Fall Apart",
       "reviews": [
         { "username": "jay", "review": "A masterpiece!" },
-        { rating: 4, comment: "A must-read classic" }
+        { rating: 4, comment: "A must-read classic" },
+        { "username": "jack", "review": "this is great" }
       ]
     },
     2: {
@@ -25,7 +26,7 @@ let books = {
     4: {
       "author": "Unknown",
       "title": "The Epic Of Gilgamesh",
-      "reviews": []
+      "reviews": [{ "username": "jack", "review": "this is great" }]
     },
     5: {
       "author": "Unknown",

@@ -30,18 +30,63 @@ const authenticatedUser = (username,password)=>{
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  let token = req.headers.authorization
-  let username = req.query.username
-  let review = req.query.review
-  let isbn = req.params.isbn
-  
-   jwt.verify(token, "access", (err, decoded) => {
-        console.log(decoded.username)
-  })
+   let token = req.headers.authorization
+   let isbn = req.params.isbn 
+   let review = req.query.review
+   if(token && isbn && review){
+    jwt.verify(token, "access", (err, decoded) =>{
+        if (err){
+            return(res.send("someting odd"))
+        }
+        else{
+         let book_reviews = books[isbn]['reviews']
+         let username = decoded.username
+         const filteredReview = book_reviews.filter(review => review.username === username);
+         if(filteredReview.length === 1){
+             filteredReview[0].review = review
+         }
+         else if(filteredReview.length === 0){
+             let new_entry = {"username": username, "review": review}
+             book_reviews.push(new_entry)
+         }
 
-  return res.status(300).json({message: "Yet to be implemented"});
+         else{
+             return res.send("user has multiple entried this is a issue")
+         }
+         return res.send(book_reviews)
+        }
+         
+   })
+   }
+
+   else{
+       return(res.send("params not found"))
+   }
+   
+  
+
+  
 });
 
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+    let token = req.headers.authorization;
+    let isbn = req.params.isbn;
+    let book_reviews = books[isbn]['reviews']
+    jwt.verify(token, "access", (err, decoded) => {
+        if (err) {
+            return res.send("Something odd");
+        } else {
+            let username = decoded.username;
+            const filteredReview = books[isbn]['reviews'].findIndex(review => review.username === username);
+            if (filteredReview !== -1) {
+                book_reviews.splice(filteredReview, 1)
+                return res.send(books[isbn]['reviews']);
+            } else {
+                return res.send("Review not found for your user");
+            }
+        }
+    });
+});
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
 module.exports.users = users;
