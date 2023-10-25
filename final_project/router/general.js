@@ -4,6 +4,7 @@ let isValid = require("./auth_users.js").isValid;
 let authenticatedUser = require("./auth_users.js").authenticatedUser;
 let users = require("./auth_users.js").users;
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 const public_users = express.Router();
 
 
@@ -33,33 +34,56 @@ public_users.post("/register", (req,res) => {
 
 // Get the book list available in the shop
 public_users.get('/',function (req, res) {
-  return res.send(JSON.stringify(books, null, 4))
+  let myPromise = new Promise((resolve, reject) => {
+      setTimeout(() => {
+          resolve(JSON.stringify(books, null, 4))
+      },1)
+  })
+  myPromise.then((data) => {
+      return res.send(data)
+  })
 });
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn',function (req, res) {
-  const isbn = req.params.isbn
-  const book = books[isbn]
-
-  if (book){
-    return res.send(JSON.stringify(book, null, 4))
+  let myPromise = new Promise((resolve, reject) => {
+    const isbn = req.params.isbn
+    const book = books[isbn]
+  
+    if (book){
+       resolve(JSON.stringify(book, null, 4))
+    }
+    else{
+        reject("cant find isbn")
+    }
+  })
+  myPromise
+  .then((data) => {
+    return res.send(data);
+  })
+  .catch((error) => {
+    res.status(404).send(error); // Handle promise rejection (book not found)
+  });
   }
-  else{
-      return res.send("cant find isbn")
-  }
- });
+ );
   
 // Get book details based on author
-public_users.get('/author/:author',function (req, res) {
-  let author = req.params.author
-  for (const key in books){
-      let book = books[key]
-      
-      if (book.author === author){
-        return res.send(JSON.stringify(book, null, 4));
+public_users.get('/author/:author', async (req, res) => {
+  const author = req.params.author;
+
+  try {
+    for (const isbn in books) {
+      const book = books[isbn];
+      if (book.author === author) {
+        const response = await axios.get(`https://ciafardoj-5000.theiadocker-3-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/author/${isbn}`);
+        const data = JSON.stringify(response.data, null, 4);
+        return res.send(data);
       }
+    }
+    return res.send("Author not found");
+  } catch (error) {
+    res.status(500).send('An error occurred: ' + error);
   }
-  return res.send("author not found")
 });
 
 // Get all books based on title
