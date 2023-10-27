@@ -4,6 +4,7 @@ let isValid = require("./auth_users.js").isValid;
 let authenticatedUser = require("./auth_users.js").authenticatedUser;
 let users = require("./auth_users.js").users;
 const jwt = require('jsonwebtoken');
+const axios = require('axios')
 const public_users = express.Router();
 
 
@@ -49,31 +50,59 @@ public_users.get('/isbn/:isbn',function (req, res) {
   }
  });
   
-// Get book details based on author
-public_users.get('/author/:author',function (req, res) {
-  let author = req.params.author
-  for (const key in books){
-      let book = books[key]
-      
-      if (book.author === author){
-        return res.send(JSON.stringify(book, null, 4));
-      }
-  }
-  return res.send("author not found")
-});
+ public_users.get('/author/:author', async (req, res) => {
+    let myPromise = new Promise((resolve, reject) => {
+        const author = req.params.author;
+        const foundBooks = Object.values(books).filter(book => book.author === author);
+
+        if (foundBooks.length > 0) {
+             resolve(JSON.stringify(foundBooks, null, 4));
+          } else {
+            reject("Author not found");
+          }
+
+    })
+    
+    myPromise
+    .then((data) => {
+        return res.send(data + " data")
+    })
+    .catch((error) => {
+       return res.send(error + " error")
+    })
+
+  });
 
 // Get all books based on title
-public_users.get('/title/:title',function (req, res) {
-    let title = req.params.title
-    for (const key in books){
-        let book = books[key]
-        
-        if (book.title === title ){
-          return res.send(JSON.stringify(book, null, 4));
+public_users.get('/title/:title', function (req, res) {
+    let myPromise = new Promise((resolve, reject) => {
+        let title = req.params.title;
+        let found = false; // Variable to track if a matching title is found
+
+        for (const key in books) {
+            let book = books[key];
+
+            if (book.title === title) {
+                found = true;
+                resolve(JSON.stringify(book, null, 4));
+                break; // Exit the loop when a match is found
+            }
         }
-    }
-    return res.send("title not found")
+
+        if (!found) {
+            reject("Title not found");
+        }
+    });
+
+    myPromise
+        .then((data) => {
+            return res.send(data);
+        })
+        .catch((error) => {
+            return res.send(error);
+        });
 });
+
 
 //  Get book review
 public_users.get('/review/:isbn',function (req, res) {
