@@ -4,7 +4,7 @@ let isValid = require("./auth_users.js").isValid;
 let authenticatedUser = require("./auth_users.js").authenticatedUser;
 let users = require("./auth_users.js").users;
 const jwt = require('jsonwebtoken');
-const axios = require('axios')
+
 const public_users = express.Router();
 
 
@@ -34,22 +34,40 @@ public_users.post("/register", (req,res) => {
 
 // Get the book list available in the shop
 public_users.get('/',function (req, res) {
-  return res.send(JSON.stringify(books, null, 4))
+  let myPromise = new Promise((resolve, reject) => {
+      setTimeout(() => {
+          resolve(JSON.stringify(books, null, 4))
+      },1)
+  })
+  myPromise.then((data) => {
+      return res.send(data)
+  })
 });
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn',function (req, res) {
-  const isbn = req.params.isbn
-  const book = books[isbn]
-
-  if (book){
-    return res.send(JSON.stringify(book, null, 4))
-  }
-  else{
-      return res.send("cant find isbn")
-  }
- });
+  let myPromise = new Promise((resolve, reject) => {
+    const isbn = req.params.isbn
+    const book = books[isbn]
   
+    if (book){
+       resolve(JSON.stringify(book, null, 4))
+    }
+    else{
+        reject("cant find isbn")
+    }
+  })
+  myPromise
+  .then((data) => {
+    return res.send(data);
+  })
+  .catch((error) => {
+    res.status(404).send(error); // Handle promise rejection (book not found)
+  });
+  }
+ );
+  
+
  public_users.get('/author/:author', async (req, res) => {
     let myPromise = new Promise((resolve, reject) => {
         const author = req.params.author;
